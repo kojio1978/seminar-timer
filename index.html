@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Timer">
+<meta name="theme-color" content="#1c1c1e">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%231c1c1e' width='100' height='100' rx='20'/><text x='50' y='68' text-anchor='middle' font-size='50' fill='%23ff9f0a'>⏱</text></svg>">
+<title>Seminar Timer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Outfit:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+html{font-size:min(3.2vw, 16px)} /* Root scales with viewport width */
+
+body{
+  min-height:100vh;min-height:100dvh;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;user-select:none;-webkit-user-select:none;
+  transition:background .5s,color .4s;
+}
+
+.app{
+  width:100%;
+  padding:1rem .5rem .8rem;
+  display:flex;flex-direction:column;align-items:center;
+  gap:1rem;position:relative;z-index:1;
+}
+
+/* ── Theme Switch ── */
+.theme-switch{
+  display:flex;gap:2px;
+  background:rgba(128,128,128,.1);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-radius:1.4rem;padding:2px;
+  border:1px solid rgba(128,128,128,.08);
+}
+.tsw-btn{
+  padding:.3rem .5rem;border-radius:1.2rem;border:none;
+  font-size:.6rem;font-weight:500;font-family:'DM Sans',sans-serif;
+  cursor:pointer;transition:all .3s;background:transparent;
+  white-space:nowrap;
+}
+.tsw-btn:hover{background:rgba(128,128,128,.1)}
+.tsw-btn.active{box-shadow:0 1px 4px rgba(0,0,0,.12)}
+
+/* ── Toolbar ── */
+.toolbar{position:fixed;bottom:.8rem;right:.8rem;display:flex;gap:.4rem;z-index:100}
+.tool-btn{
+  width:2rem;height:2rem;border-radius:.4rem;
+  border:1px solid rgba(128,128,128,.2);background:rgba(128,128,128,.08);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  color:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .25s;opacity:.45;
+}
+.tool-btn:hover{opacity:.85;transform:scale(1.05)}
+.tool-btn svg{width:.9rem;height:.9rem}
+
+/* ── Sound Menu ── */
+.sound-menu{
+  position:fixed;bottom:3.4rem;right:.8rem;
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-radius:.6rem;padding:.3rem 0;z-index:101;
+  display:none;min-width:8.5rem;
+}
+.sound-menu.show{display:block;animation:fadeUp .2s ease}
+.sound-option{
+  padding:.4rem .75rem;font-size:.7rem;cursor:pointer;
+  display:flex;align-items:center;gap:.3rem;
+  font-family:'DM Sans',sans-serif;border:none;background:none;
+  width:100%;text-align:left;transition:background .2s;color:inherit;
+}
+.sound-option:hover{background:rgba(128,128,128,.1)}
+.sound-option.active::before{content:'✓';font-size:.55rem;width:.75rem}
+.sound-option:not(.active)::before{content:'';width:.75rem;display:inline-block}
+
+/* ── Timer Area ── */
+.timer-area{
+  width:100%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  position:relative;min-height:8rem;
+}
+
+/* ── Input ── */
+.input-section{display:flex;flex-direction:column;align-items:center;gap:.75rem;width:100%}
+.input-row{display:flex;align-items:center;gap:.4rem}
+.input-group{display:flex;flex-direction:column;align-items:center;gap:2px}
+.input-group label{font-size:.55rem;font-weight:500;letter-spacing:.5px;opacity:.4}
+
+.time-input{
+  width:2.8rem;height:2.2rem;border-radius:.4rem;
+  font-size:1.1rem;font-weight:300;text-align:center;
+  outline:none;font-variant-numeric:tabular-nums;
+  -moz-appearance:textfield;transition:border-color .3s,box-shadow .3s;
+}
+.time-input::-webkit-inner-spin-button,
+.time-input::-webkit-outer-spin-button{-webkit-appearance:none}
+
+.input-sep{font-size:.9rem;font-weight:200;opacity:.3;margin-top:.7rem}
+
+.presets{display:flex;gap:3px;flex-wrap:wrap;justify-content:center}
+.preset-btn{
+  padding:2px .4rem;border-radius:.5rem;
+  font-size:.5rem;font-weight:400;cursor:pointer;
+  transition:all .25s;font-family:'DM Sans',sans-serif;
+}
+.preset-btn:hover{transform:translateY(-1px)}
+
+/* ── Controls ── */
+.controls-wrap{min-height:2.8rem;display:flex;align-items:center;justify-content:center}
+.controls{display:flex;gap:.5rem;align-items:center}
+
+.btn{
+  height:2rem;border:none;border-radius:1rem;
+  font-size:.65rem;font-weight:500;cursor:pointer;
+  transition:all .3s;display:flex;align-items:center;
+  justify-content:center;font-family:'DM Sans',sans-serif;
+}
+.btn-start{min-width:5.5rem;padding:0 1rem}
+.btn-pause,.btn-resume{width:4.8rem;padding:0}
+.btn-reset{width:3.5rem;padding:0;background:transparent!important;font-size:.55rem}
+.btn-stop{width:4.8rem;padding:0}
+
+.message{font-size:.7rem;min-height:1rem;text-align:center;transition:opacity .3s}
+
+.credit{
+  position:fixed;bottom:3rem;left:50%;transform:translateX(-50%);
+  font-size:.48rem;letter-spacing:2px;
+  opacity:.18;z-index:10;font-family:'DM Sans',sans-serif;
+  white-space:nowrap;
+}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+.app>*{opacity:0;animation:fadeIn .5s ease forwards}
+.app>*:nth-child(1){animation-delay:.1s}
+.app>*:nth-child(2){animation-delay:.2s}
+.app>*:nth-child(3){animation-delay:.25s}
+.app>*:nth-child(4){animation-delay:.3s}
+.app>*:nth-child(5){animation-delay:.35s}
+
+.hidden{display:none!important}
+
+/* ── Digital Display ── */
+.digit-row{display:flex;align-items:center;justify-content:center;gap:1px;width:100%}
+.dg{text-align:center}
+.dg-digits{font-variant-numeric:tabular-nums;line-height:1;transition:color .5s}
+.dg-label{font-size:.48rem;letter-spacing:1px;text-transform:uppercase;opacity:.4;margin-top:3px}
+.dg-sep{
+  line-height:1;transition:color .5s,opacity .5s;
+  display:flex;align-items:center;
+  margin-bottom:1rem;
+}
+
+/* ═══════════════════════════════════
+   ORIGINAL
+   ═══════════════════════════════════ */
+[data-theme="original"]{background:#1c1c1e;color:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,'DM Sans',sans-serif}
+[data-theme="original"] .theme-switch{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.05)}
+[data-theme="original"] .tsw-btn{color:rgba(255,255,255,.45)}
+[data-theme="original"] .tsw-btn.active{background:rgba(255,255,255,.1);color:#f5f5f7}
+[data-theme="original"] .credit{color:#f5f5f7}
+[data-theme="original"] .orig-display{display:flex!important}
+
+[data-theme="original"] .dg-digits{font-size:clamp(1.6rem,14vw,5rem);font-weight:200;color:#f5f5f7;letter-spacing:-1px}
+[data-theme="original"] .dg-sep{font-size:clamp(1.6rem,14vw,5rem);font-weight:200;color:#f5f5f7;opacity:.8}
+[data-theme="original"] .dg-label{color:#98989d}
+
+[data-theme="original"] .time-input{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:#f5f5f7;font-family:inherit}
+[data-theme="original"] .time-input:focus{border-color:#ff9f0a;box-shadow:0 0 0 2px rgba(255,159,10,.1)}
+[data-theme="original"] .preset-btn{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);color:#98989d}
+[data-theme="original"] .preset-btn:hover{background:rgba(255,159,10,.08);border-color:rgba(255,159,10,.2);color:#ff9f0a}
+[data-theme="original"] .btn-start{background:#ff9f0a;color:#000;box-shadow:0 2px 10px rgba(255,159,10,.2)}
+[data-theme="original"] .btn-start:hover{box-shadow:0 4px 16px rgba(255,159,10,.3);transform:translateY(-1px)}
+[data-theme="original"] .btn-pause,[data-theme="original"] .btn-resume{background:#3a3a3c;color:#f5f5f7}
+[data-theme="original"] .btn-reset{color:#98989d}
+[data-theme="original"] .btn-stop{background:#ff453a;color:#fff;box-shadow:0 2px 10px rgba(255,69,58,.2)}
+[data-theme="original"] .message{color:#ff9f0a}
+[data-theme="original"] .state-warning .dg-digits{color:#ff9f0a}
+[data-theme="original"] .state-warning .dg-sep{color:#ff9f0a}
+[data-theme="original"] .state-danger .dg-digits{color:#ff453a}
+[data-theme="original"] .state-danger .dg-sep{color:#ff453a}
+[data-theme="original"] .state-finished .dg-digits{color:#ff453a;animation:pulse 1s infinite}
+[data-theme="original"] .sound-menu{background:rgba(44,44,46,.92);border:1px solid rgba(255,255,255,.08)}
+[data-theme="original"] .sound-option{color:#bbb}
+[data-theme="original"] .sound-option:hover{background:rgba(255,255,255,.05);color:#fff}
+[data-theme="original"] .sound-option.active{color:#ff9f0a}
+
+/* ═══════════════════════════════════
+   MINIMAL
+   ═══════════════════════════════════ */
+[data-theme="minimal"]{background:#fafafa;color:#1a1a1a;font-family:'Outfit','DM Sans',sans-serif}
+[data-theme="minimal"] .theme-switch{background:rgba(0,0,0,.03);border-color:rgba(0,0,0,.05)}
+[data-theme="minimal"] .tsw-btn{color:rgba(0,0,0,.3)}
+[data-theme="minimal"] .tsw-btn.active{background:#fff;color:#1a1a1a;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+[data-theme="minimal"] .credit{color:#1a1a1a}
+[data-theme="minimal"] .tool-btn{border-color:rgba(0,0,0,.07);background:rgba(0,0,0,.02);color:#999}
+[data-theme="minimal"] .mini-display{display:flex!important}
+
+[data-theme="minimal"] .mini-display .dg-digits{font-family:'Outfit',sans-serif;font-size:clamp(1.6rem,14vw,5rem);font-weight:200;color:#1a1a1a;letter-spacing:-2px}
+[data-theme="minimal"] .mini-display .dg-sep{font-size:clamp(1.6rem,14vw,5rem);font-weight:200;color:#1a1a1a;opacity:.7}
+[data-theme="minimal"] .mini-display .dg-label{color:#ccc}
+
+[data-theme="minimal"] .time-input{background:#fff;border:1px solid #e0e0e0;color:#1a1a1a;font-family:'Outfit',sans-serif}
+[data-theme="minimal"] .time-input:focus{border-color:#1a1a1a;box-shadow:0 0 0 2px rgba(0,0,0,.03)}
+[data-theme="minimal"] .preset-btn{background:#fff;border:1px solid #e0e0e0;color:#aaa}
+[data-theme="minimal"] .preset-btn:hover{border-color:#999;color:#444}
+[data-theme="minimal"] .btn-start{background:#1a1a1a;color:#fff}
+[data-theme="minimal"] .btn-start:hover{background:#333;transform:translateY(-1px)}
+[data-theme="minimal"] .btn-pause,[data-theme="minimal"] .btn-resume{background:#eee;color:#333}
+[data-theme="minimal"] .btn-reset{color:#ccc}
+[data-theme="minimal"] .btn-stop{background:#d44;color:#fff}
+[data-theme="minimal"] .message{color:#aaa}
+[data-theme="minimal"] .state-warning .dg-digits{color:#e09000}
+[data-theme="minimal"] .state-warning .dg-sep{color:#e09000}
+[data-theme="minimal"] .state-danger .dg-digits{color:#d44}
+[data-theme="minimal"] .state-danger .dg-sep{color:#d44}
+[data-theme="minimal"] .state-finished .dg-digits{color:#d44;animation:pulse 1s infinite}
+[data-theme="minimal"] .sound-menu{background:rgba(255,255,255,.95);border:1px solid rgba(0,0,0,.07)}
+[data-theme="minimal"] .sound-option{color:#888}
+[data-theme="minimal"] .sound-option:hover{background:rgba(0,0,0,.03);color:#333}
+[data-theme="minimal"] .sound-option.active{color:#1a1a1a}
+
+/* ═══════════════════════════════════
+   ANALOG
+   ═══════════════════════════════════ */
+[data-theme="analog"]{background:#1c1c1e;color:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,'DM Sans',sans-serif}
+[data-theme="analog"] .theme-switch{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.05)}
+[data-theme="analog"] .tsw-btn{color:rgba(255,255,255,.45)}
+[data-theme="analog"] .tsw-btn.active{background:rgba(255,255,255,.1);color:#f5f5f7}
+[data-theme="analog"] .credit{color:#f5f5f7}
+[data-theme="analog"] .analog-display{display:flex!important}
+
+[data-theme="analog"] .time-input{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:#f5f5f7;font-family:inherit}
+[data-theme="analog"] .time-input:focus{border-color:#ff9f0a;box-shadow:0 0 0 2px rgba(255,159,10,.1)}
+[data-theme="analog"] .preset-btn{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);color:#98989d}
+[data-theme="analog"] .preset-btn:hover{background:rgba(255,159,10,.08);border-color:rgba(255,159,10,.2);color:#ff9f0a}
+[data-theme="analog"] .btn-start{background:#ff9f0a;color:#000;box-shadow:0 2px 10px rgba(255,159,10,.2)}
+[data-theme="analog"] .btn-start:hover{box-shadow:0 4px 16px rgba(255,159,10,.3);transform:translateY(-1px)}
+[data-theme="analog"] .btn-pause,[data-theme="analog"] .btn-resume{background:#3a3a3c;color:#f5f5f7}
+[data-theme="analog"] .btn-reset{color:#98989d}
+[data-theme="analog"] .btn-stop{background:#ff453a;color:#fff}
+[data-theme="analog"] .message{color:#ff9f0a}
+[data-theme="analog"] .sound-menu{background:rgba(44,44,46,.92);border:1px solid rgba(255,255,255,.08)}
+[data-theme="analog"] .sound-option{color:#bbb}
+[data-theme="analog"] .sound-option:hover{background:rgba(255,255,255,.05);color:#fff}
+[data-theme="analog"] .sound-option.active{color:#ff9f0a}
+
+/* Analog display */
+.analog-display{display:none;flex-direction:column;align-items:center}
+.analog-ring-wrap{position:relative;width:min(65vw,12rem);height:min(65vw,12rem)}
+.analog-ring-wrap svg{width:100%;height:100%}
+.analog-center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.analog-time{font-size:clamp(1rem,7vw,1.8rem);font-weight:200;color:#f5f5f7;font-variant-numeric:tabular-nums;transition:color .5s;line-height:1}
+.analog-sep{font-size:clamp(1rem,7vw,1.8rem);font-weight:200;color:#f5f5f7;opacity:.8;display:flex;align-items:center;transition:color .5s}
+[data-theme="analog"] .state-warning .analog-time,[data-theme="analog"] .state-warning .analog-sep{color:#ff9f0a}
+[data-theme="analog"] .state-danger .analog-time,[data-theme="analog"] .state-danger .analog-sep{color:#ff453a}
+[data-theme="analog"] .state-finished .analog-time{color:#ff453a;animation:pulse 1s infinite}
+
+/* ═══════════════════════════════════
+   FLIP
+   ═══════════════════════════════════ */
+[data-theme="flip"]{background:#d6d2cb;color:#333;font-family:'DM Sans',sans-serif}
+[data-theme="flip"] .theme-switch{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.05)}
+[data-theme="flip"] .tsw-btn{color:rgba(0,0,0,.35)}
+[data-theme="flip"] .tsw-btn.active{background:rgba(255,255,255,.65);color:#333;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+[data-theme="flip"] .credit{color:#333}
+[data-theme="flip"] .tool-btn{border-color:rgba(0,0,0,.08);background:rgba(0,0,0,.04);color:#888}
+[data-theme="flip"] .flip-display{display:flex!important}
+
+[data-theme="flip"] .time-input{background:#fff;border:1px solid #c5c0b8;color:#333;font-family:'DM Sans';font-weight:500}
+[data-theme="flip"] .time-input:focus{border-color:#666;box-shadow:0 0 0 2px rgba(0,0,0,.05)}
+[data-theme="flip"] .preset-btn{background:rgba(255,255,255,.55);border:1px solid #c5c0b8;color:#999}
+[data-theme="flip"] .preset-btn:hover{border-color:#999;color:#444;background:rgba(255,255,255,.75)}
+[data-theme="flip"] .btn-start{background:#333;color:#fff}
+[data-theme="flip"] .btn-start:hover{background:#555;transform:translateY(-1px)}
+[data-theme="flip"] .btn-pause,[data-theme="flip"] .btn-resume{background:rgba(0,0,0,.07);color:#555}
+[data-theme="flip"] .btn-reset{color:#aaa}
+[data-theme="flip"] .btn-stop{background:#c44;color:#fff}
+[data-theme="flip"] .message{color:#777}
+[data-theme="flip"] .sound-menu{background:rgba(240,236,230,.95);border:1px solid rgba(0,0,0,.08)}
+[data-theme="flip"] .sound-option{color:#777}
+[data-theme="flip"] .sound-option:hover{background:rgba(0,0,0,.04);color:#333}
+[data-theme="flip"] .sound-option.active{color:#333}
+
+/* Flip display */
+.flip-display{display:none;flex-direction:column;align-items:center}
+.flip-case{
+  background:linear-gradient(180deg,#f2f0ec,#e6e3dd);
+  border-radius:.6rem;padding:min(1.5vw,.4rem);
+  box-shadow:0 2px 0 #d2cec6,0 3px 0 #c6c2ba,0 4px 12px rgba(0,0,0,.14),inset 0 1px 0 rgba(255,255,255,.7);
+  border:1px solid #d5d1c9;
+}
+.flip-inner{
+  background:#1a1816;border-radius:.35rem;
+  padding:min(2vw,.5rem) min(1.5vw,.35rem);
+  display:flex;align-items:center;gap:min(1vw,.2rem);
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.4);
+}
+.flip-pair{display:flex;gap:1px}
+.flip-card{
+  width:clamp(1.2rem,9vw,3rem);height:clamp(1.8rem,13.5vw,4.5rem);
+  position:relative;perspective:600px;
+}
+.fc-upper,.fc-lower{position:absolute;width:100%;height:50%;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.fc-upper{top:0;background:linear-gradient(180deg,#2c2824,#201d19);border-radius:.3rem .3rem 0 0;border-bottom:1px solid rgba(0,0,0,.5);z-index:1}
+.fc-lower{bottom:0;background:linear-gradient(180deg,#1e1b17,#181510);border-radius:0 0 .3rem .3rem;border-top:1px solid rgba(60,55,48,.25)}
+.flip-card::after{content:'';position:absolute;top:50%;left:0;right:0;height:2px;background:linear-gradient(90deg,rgba(0,0,0,.7),rgba(0,0,0,.25) 50%,rgba(0,0,0,.7));z-index:5;box-shadow:0 1px 0 rgba(60,55,48,.15)}
+.flip-card::before{content:'';position:absolute;top:calc(50% - 3px);left:-1px;width:2px;height:6px;background:#0a0908;border-radius:0 1px 1px 0;z-index:6;box-shadow:calc(clamp(1.2rem,9vw,3rem) - 0px) 0 0 0 #0a0908}
+.fn-upper,.fn-lower{
+  font-family:'DM Sans',sans-serif;
+  font-size:clamp(1.1rem,8.5vw,2.6rem);font-weight:500;
+  color:#e8e4dc;text-shadow:0 1px 2px rgba(0,0,0,.3);line-height:1;position:absolute;
+}
+.fn-upper{bottom:0;transform:translateY(50%)}
+.fn-lower{top:0;transform:translateY(-50%);color:#ddd8d0}
+.flip-sep{font-size:clamp(.9rem,7vw,2rem);font-weight:400;color:#666;display:flex;align-items:center}
+
+[data-theme="flip"] .state-warning .fn-upper,[data-theme="flip"] .state-warning .fn-lower{color:#ffaa00!important}
+[data-theme="flip"] .state-danger .fn-upper,[data-theme="flip"] .state-danger .fn-lower{color:#ff5544!important}
+[data-theme="flip"] .state-finished .fn-upper,[data-theme="flip"] .state-finished .fn-lower{color:#ff5544!important;animation:pulse 1s infinite}
+
+/* ── Fullscreen ── */
+:fullscreen body,:-webkit-full-screen body{display:flex;align-items:center;justify-content:center}
+:fullscreen html,:-webkit-full-screen html{font-size:16px!important}
+:fullscreen .app,:-webkit-full-screen .app{max-width:600px}
+:fullscreen .dg-digits,:-webkit-full-screen .dg-digits{font-size:8rem!important}
+:fullscreen .dg-sep,:-webkit-full-screen .dg-sep{font-size:8rem!important}
+:fullscreen .analog-ring-wrap,:-webkit-full-screen .analog-ring-wrap{width:20rem!important;height:20rem!important}
+:fullscreen .analog-time,:-webkit-full-screen .analog-time{font-size:3rem!important}
+:fullscreen .analog-sep,:-webkit-full-screen .analog-sep{font-size:3rem!important}
+:fullscreen .flip-card,:-webkit-full-screen .flip-card{width:4.2rem!important;height:6.2rem!important}
+:fullscreen .fn-upper,:-webkit-full-screen .fn-upper,:fullscreen .fn-lower,:-webkit-full-screen .fn-lower{font-size:3.8rem!important}
+:fullscreen .flip-sep,:-webkit-full-screen .flip-sep{font-size:3rem!important}
+:fullscreen .flip-case,:-webkit-full-screen .flip-case{padding:.8rem!important;border-radius:1rem!important}
+:fullscreen .flip-inner,:-webkit-full-screen .flip-inner{padding:.8rem .6rem!important;border-radius:.5rem!important;gap:.4rem!important}
+:fullscreen .btn,:-webkit-full-screen .btn{height:2.8rem!important;font-size:.9rem!important}
+:fullscreen .btn-start,:-webkit-full-screen .btn-start{min-width:9rem!important}
+:fullscreen .btn-pause,:-webkit-full-screen .btn-pause,:fullscreen .btn-resume,:-webkit-full-screen .btn-resume,:fullscreen .btn-stop,:-webkit-full-screen .btn-stop{width:7rem!important}
+
+/* ── Mobile ── */
+@media(max-height:500px){
+  .app{gap:.6rem;padding:.5rem}
+  .timer-area{min-height:5rem}
+}
+</style>
+</head>
+<body data-theme="original">
+
+<div class="app">
+  <div class="theme-switch">
+    <button class="tsw-btn active" data-t="original" onclick="setTheme('original')">Original</button>
+    <button class="tsw-btn" data-t="minimal" onclick="setTheme('minimal')">Minimal</button>
+    <button class="tsw-btn" data-t="analog" onclick="setTheme('analog')">Analog</button>
+    <button class="tsw-btn" data-t="flip" onclick="setTheme('flip')">Flip</button>
+  </div>
+
+  <div class="timer-area" id="timerArea">
+    <!-- ORIGINAL -->
+    <div class="digit-row orig-display" id="origDisplay" style="display:none">
+      <div class="dg"><div class="dg-digits" id="oH">00</div><div class="dg-label">HRS</div></div>
+      <div class="dg-sep">:</div>
+      <div class="dg"><div class="dg-digits" id="oM">05</div><div class="dg-label">MIN</div></div>
+      <div class="dg-sep">:</div>
+      <div class="dg"><div class="dg-digits" id="oS">00</div><div class="dg-label">SEC</div></div>
+    </div>
+    <!-- MINIMAL -->
+    <div class="digit-row mini-display" id="miniDisplay" style="display:none">
+      <div class="dg"><div class="dg-digits" id="mH">00</div><div class="dg-label">HRS</div></div>
+      <div class="dg-sep">:</div>
+      <div class="dg"><div class="dg-digits" id="mM">05</div><div class="dg-label">MIN</div></div>
+      <div class="dg-sep">:</div>
+      <div class="dg"><div class="dg-digits" id="mS">00</div><div class="dg-label">SEC</div></div>
+    </div>
+    <!-- ANALOG -->
+    <div class="analog-display" id="analogDisplay">
+      <div class="analog-ring-wrap">
+        <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="150" cy="150" r="138" fill="none" stroke="#2c2c2e" stroke-width="4"/>
+          <g id="analogTicks"></g>
+          <circle id="analogArc" cx="150" cy="150" r="138" fill="none" stroke="#ff9f0a" stroke-width="5" stroke-linecap="round" stroke-dasharray="867.08" stroke-dashoffset="0" transform="rotate(-90 150 150)" style="transition:stroke-dashoffset 1s linear,stroke .5s;filter:drop-shadow(0 0 8px rgba(255,159,10,.35))"/>
+          <circle id="analogDot" cx="150" cy="12" r="4" fill="#ff9f0a" style="transition:opacity .5s;filter:drop-shadow(0 0 4px rgba(255,159,10,.5))"/>
+        </svg>
+        <div class="analog-center">
+          <span class="analog-time" id="aH">00</span>
+          <span class="analog-sep">:</span>
+          <span class="analog-time" id="aM">05</span>
+          <span class="analog-sep">:</span>
+          <span class="analog-time" id="aS">00</span>
+        </div>
+      </div>
+    </div>
+    <!-- FLIP -->
+    <div class="flip-display" id="flipDisplay">
+      <div class="flip-case">
+        <div class="flip-inner">
+          <div class="flip-pair">
+            <div class="flip-card" data-id="fh0"><div class="fc-upper"><span class="fn-upper">0</span></div><div class="fc-lower"><span class="fn-lower">0</span></div></div>
+            <div class="flip-card" data-id="fh1"><div class="fc-upper"><span class="fn-upper">0</span></div><div class="fc-lower"><span class="fn-lower">0</span></div></div>
+          </div>
+          <div class="flip-sep">:</div>
+          <div class="flip-pair">
+            <div class="flip-card" data-id="fm0"><div class="fc-upper"><span class="fn-upper">0</span></div><div class="fc-lower"><span class="fn-lower">0</span></div></div>
+            <div class="flip-card" data-id="fm1"><div class="fc-upper"><span class="fn-upper">5</span></div><div class="fc-lower"><span class="fn-lower">5</span></div></div>
+          </div>
+          <div class="flip-sep">:</div>
+          <div class="flip-pair">
+            <div class="flip-card" data-id="fs0"><div class="fc-upper"><span class="fn-upper">0</span></div><div class="fc-lower"><span class="fn-lower">0</span></div></div>
+            <div class="flip-card" data-id="fs1"><div class="fc-upper"><span class="fn-upper">0</span></div><div class="fc-lower"><span class="fn-lower">0</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-section" id="inputSection">
+    <div class="input-row">
+      <div class="input-group"><label>時</label><input type="text" class="time-input" id="inputH" value="00" maxlength="2" inputmode="numeric"></div>
+      <div class="input-sep">:</div>
+      <div class="input-group"><label>分</label><input type="text" class="time-input" id="inputM" value="05" maxlength="2" inputmode="numeric"></div>
+      <div class="input-sep">:</div>
+      <div class="input-group"><label>秒</label><input type="text" class="time-input" id="inputS" value="00" maxlength="2" inputmode="numeric"></div>
+    </div>
+    <div class="presets">
+      <button class="preset-btn" onclick="setPreset(0,1,0)">1分</button>
+      <button class="preset-btn" onclick="setPreset(0,3,0)">3分</button>
+      <button class="preset-btn" onclick="setPreset(0,5,0)">5分</button>
+      <button class="preset-btn" onclick="setPreset(0,10,0)">10分</button>
+      <button class="preset-btn" onclick="setPreset(0,15,0)">15分</button>
+      <button class="preset-btn" onclick="setPreset(0,20,0)">20分</button>
+      <button class="preset-btn" onclick="setPreset(0,30,0)">30分</button>
+      <button class="preset-btn" onclick="setPreset(1,0,0)">1時間</button>
+    </div>
+  </div>
+
+  <div class="controls-wrap">
+    <div class="controls" id="controls">
+      <button class="btn btn-start" onclick="startTimer()">スタート</button>
+    </div>
+  </div>
+  <div class="message" id="message"></div>
+</div>
+
+<div class="credit">design by kojio</div>
+
+<div class="toolbar">
+  <button class="tool-btn" onclick="toggleSoundMenu()" title="アラーム音">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+  </button>
+  <button class="tool-btn" onclick="toggleFullscreen()" title="フルスクリーン (F)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+  </button>
+</div>
+
+<div class="sound-menu" id="soundMenu">
+  <button class="sound-option active" data-sound="bell" onclick="selectSound('bell')">ベル</button>
+  <button class="sound-option" data-sound="chime" onclick="selectSound('chime')">チャイム</button>
+  <button class="sound-option" data-sound="digital" onclick="selectSound('digital')">デジタル</button>
+  <button class="sound-option" data-sound="school" onclick="selectSound('school')">学校チャイム</button>
+  <button class="sound-option" data-sound="mute" onclick="selectSound('mute')">ミュート</button>
+</div>
+
+<script>
+let totalSeconds=0,remainingSeconds=0,timerInterval=null;
+let isPaused=false,isRunning=false;
+let currentTheme='original',currentSound='bell';
+let audioCtx=null;
+let prevDigits={fh0:'0',fh1:'0',fm0:'0',fm1:'5',fs0:'0',fs1:'0'};
+const $=id=>document.getElementById(id);
+
+function setTheme(t){
+  currentTheme=t;
+  document.body.setAttribute('data-theme',t);
+  document.querySelectorAll('.tsw-btn').forEach(b=>b.classList.toggle('active',b.dataset.t===t));
+  updateAll(isRunning||isPaused?remainingSeconds:getInputSec());
+}
+
+function buildTicks(){
+  const g=$('analogTicks');
+  for(let i=0;i<60;i++){
+    const a=i*6*Math.PI/180,major=i%5===0;
+    const r1=major?122:128,r2=134;
+    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1',150+r1*Math.sin(a));l.setAttribute('y1',150-r1*Math.cos(a));
+    l.setAttribute('x2',150+r2*Math.sin(a));l.setAttribute('y2',150-r2*Math.cos(a));
+    l.setAttribute('stroke',major?'#555':'#3a3a3c');l.setAttribute('stroke-width',major?'2':'1');
+    g.appendChild(l);
+  }
+}
+
+function pad(n){return String(Math.max(0,n)).padStart(2,'0')}
+function getInputSec(){return(parseInt($('inputH').value)||0)*3600+(parseInt($('inputM').value)||0)*60+(parseInt($('inputS').value)||0)}
+
+function updateAll(secs){
+  secs=Math.max(0,secs);
+  const h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60),s=secs%60;
+  const hh=pad(h),mm=pad(m),ss=pad(s);
+
+  $('oH').textContent=hh;$('oM').textContent=mm;$('oS').textContent=ss;
+  $('mH').textContent=hh;$('mM').textContent=mm;$('mS').textContent=ss;
+  $('aH').textContent=hh;$('aM').textContent=mm;$('aS').textContent=ss;
+
+  const circ=2*Math.PI*138;
+  if(totalSeconds>0){
+    const pct=secs/totalSeconds;
+    $('analogArc').style.strokeDashoffset=circ*(1-pct);
+    const angle=-Math.PI/2+2*Math.PI*pct;
+    $('analogDot').setAttribute('cx',150+138*Math.cos(angle));
+    $('analogDot').setAttribute('cy',150+138*Math.sin(angle));
+    $('analogDot').style.opacity=pct>0?'1':'0';
+  }else{$('analogArc').style.strokeDashoffset='0';$('analogDot').style.opacity='0'}
+
+  const digits={fh0:hh[0],fh1:hh[1],fm0:mm[0],fm1:mm[1],fs0:ss[0],fs1:ss[1]};
+  Object.keys(digits).forEach(key=>{
+    const card=document.querySelector(`[data-id="${key}"]`);
+    if(!card)return;
+    const nv=digits[key],ov=prevDigits[key];
+    if(nv!==ov&&isRunning&&!isPaused)animateFlip(card,ov,nv);
+    else{card.querySelector('.fn-upper').textContent=nv;card.querySelector('.fn-lower').textContent=nv}
+  });
+  prevDigits={...digits};
+}
+
+function animateFlip(card,ov,nv){
+  card.querySelectorAll('.flip-anim').forEach(e=>e.remove());
+  const f=document.createElement('div');
+  f.className='flip-anim';
+  f.style.cssText=`position:absolute;top:0;left:0;right:0;height:50%;transform-origin:bottom center;backface-visibility:hidden;z-index:10;overflow:hidden;border-radius:.3rem .3rem 0 0;background:linear-gradient(180deg,#2c2824,#201d19)`;
+  f.innerHTML=`<span style="position:absolute;bottom:0;transform:translateY(50%);font-family:DM Sans;font-size:clamp(1.1rem,8.5vw,2.6rem);font-weight:500;color:#e8e4dc;text-shadow:0 1px 2px rgba(0,0,0,.3)">${ov}</span>`;
+  card.appendChild(f);
+  f.animate([{transform:'rotateX(0deg)'},{transform:'rotateX(-90deg)'}],{duration:220,easing:'ease-in',fill:'forwards'}).onfinish=()=>f.remove();
+  setTimeout(()=>{card.querySelector('.fn-upper').textContent=nv;card.querySelector('.fn-lower').textContent=nv},110);
+}
+
+function updateTimerState(){
+  const a=$('timerArea');
+  a.classList.remove('state-warning','state-danger','state-finished');
+  if(!isRunning&&!isPaused)return;
+  if(remainingSeconds<=0)a.classList.add('state-finished');
+  else if(totalSeconds>0){const p=remainingSeconds/totalSeconds;if(p<=.1||remainingSeconds<=10)a.classList.add('state-danger');else if(p<=.25||remainingSeconds<=60)a.classList.add('state-warning')}
+  const arc=$('analogArc'),dot=$('analogDot');
+  if(a.classList.contains('state-danger')){arc.style.stroke='#ff453a';arc.style.filter='drop-shadow(0 0 8px rgba(255,69,58,.4))';dot.setAttribute('fill','#ff453a')}
+  else{arc.style.stroke='#ff9f0a';arc.style.filter='drop-shadow(0 0 8px rgba(255,159,10,.35))';dot.setAttribute('fill','#ff9f0a')}
+}
+
+function renderCtrl(mode){
+  const html={
+    setup:'<button class="btn btn-start" onclick="startTimer()">スタート</button>',
+    running:'<button class="btn btn-pause" onclick="pauseTimer()">一時停止</button><button class="btn btn-reset" onclick="resetTimer()">リセット</button>',
+    paused:'<button class="btn btn-resume" onclick="resumeTimer()">再開</button><button class="btn btn-reset" onclick="resetTimer()">リセット</button>',
+    finished:'<button class="btn btn-stop" onclick="stopAlarm()">停止</button><button class="btn btn-reset" onclick="resetTimer()">リセット</button>'
+  };$('controls').innerHTML=html[mode]||html.setup;
+}
+
+function startTimer(){
+  totalSeconds=getInputSec();
+  if(totalSeconds<=0){$('message').textContent='時間を設定してください';return}
+  remainingSeconds=totalSeconds;isRunning=true;isPaused=false;
+  $('inputSection').classList.add('hidden');$('message').textContent='';
+  renderCtrl('running');updateAll(remainingSeconds);updateTimerState();
+  timerInterval=setInterval(tick,1000);
+}
+function tick(){remainingSeconds--;updateAll(Math.max(0,remainingSeconds));updateTimerState();if(remainingSeconds<=0){clearInterval(timerInterval);timerInterval=null;onFinish()}}
+function pauseTimer(){clearInterval(timerInterval);isPaused=true;renderCtrl('paused');updateAll(remainingSeconds)}
+function resumeTimer(){isPaused=false;$('message').textContent='';renderCtrl('running');timerInterval=setInterval(tick,1000)}
+function resetTimer(){
+  clearInterval(timerInterval);timerInterval=null;stopAlarmSnd();
+  isRunning=false;isPaused=false;totalSeconds=0;remainingSeconds=0;
+  $('timerArea').classList.remove('state-warning','state-danger','state-finished');
+  $('inputSection').classList.remove('hidden');
+  $('analogArc').style.stroke='#ff9f0a';$('analogArc').style.filter='drop-shadow(0 0 8px rgba(255,159,10,.35))';$('analogDot').setAttribute('fill','#ff9f0a');
+  updateAll(getInputSec());renderCtrl('setup');$('message').textContent='';
+}
+function onFinish(){isRunning=false;renderCtrl('finished');$('message').textContent='タイムアップ！';updateAll(0);if(currentSound!=='mute')playAlarm()}
+function setPreset(h,m,s){$('inputH').value=pad(h);$('inputM').value=pad(m);$('inputS').value=pad(s);updateAll(h*3600+m*60+s)}
+
+['inputH','inputM','inputS'].forEach(id=>{
+  const el=$(id);
+  el.addEventListener('focus',()=>el.select());
+  el.addEventListener('input',()=>{el.value=el.value.replace(/\D/g,'').slice(0,2);updateAll(getInputSec())});
+  el.addEventListener('blur',()=>{el.value=pad(parseInt(el.value)||0)});
+});
+
+let alarmTimeouts=[];
+function getCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx}
+function tone(c,f,st,d,ty='sine',v=.2){const o=c.createOscillator(),g=c.createGain();o.type=ty;o.frequency.setValueAtTime(f,st);g.gain.setValueAtTime(v,st);g.gain.exponentialRampToValueAtTime(.001,st+d);o.connect(g);g.connect(c.destination);o.start(st);o.stop(st+d)}
+function playAlarm(){
+  const c=getCtx(),n=c.currentTime;
+  const S={
+    bell:()=>{for(let r=0;r<4;r++){const b=n+r*1.4;[880,1046.5,1318.5].forEach((f,i)=>tone(c,f,b+i*.22,.6))}},
+    chime:()=>{[523.25,659.25,783.99,1046.5].forEach((f,i)=>{for(let r=0;r<3;r++)tone(c,f,n+r*2.2+i*.35,.9,'sine',.16)})},
+    digital:()=>{for(let r=0;r<6;r++){tone(c,1000,n+r*.6,.15,'square',.1);tone(c,1000,n+r*.6+.2,.15,'square',.1)}},
+    school:()=>{[[659.25,0],[493.88,.5],[523.25,1],[392,1.5],[392,2.5],[523.25,3],[659.25,3.5],[493.88,4]].forEach(([f,t])=>{for(let r=0;r<2;r++)tone(c,f,n+r*5+t,.7,'sine',.16)})}
+  };if(S[currentSound])S[currentSound]();
+  alarmTimeouts.push(setTimeout(()=>$('message').textContent='',10000));
+}
+function stopAlarmSnd(){alarmTimeouts.forEach(t=>clearTimeout(t));alarmTimeouts=[]}
+function stopAlarm(){stopAlarmSnd();resetTimer()}
+
+function toggleSoundMenu(){$('soundMenu').classList.toggle('show')}
+function selectSound(s){
+  currentSound=s;
+  document.querySelectorAll('.sound-option').forEach(e=>e.classList.toggle('active',e.dataset.sound===s));
+  $('soundMenu').classList.remove('show');
+  if(s!=='mute'){const c=getCtx(),n=c.currentTime;({bell:()=>tone(c,1046.5,n,.4),chime:()=>tone(c,783.99,n,.5),digital:()=>tone(c,1000,n,.1,'square',.1),school:()=>tone(c,659.25,n,.5)})[s]?.()}
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.sound-menu')&&!e.target.closest('.tool-btn'))$('soundMenu').classList.remove('show')});
+
+function toggleFullscreen(){if(!document.fullscreenElement)document.documentElement.requestFullscreen().catch(()=>{});else document.exitFullscreen()}
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT')return;
+  if(e.code==='Space'){e.preventDefault();if(!isRunning&&!isPaused)startTimer();else if(isRunning&&!isPaused)pauseTimer();else if(isPaused)resumeTimer()}
+  if(e.code==='Escape')resetTimer();
+  if(e.code==='KeyF')toggleFullscreen();
+});
+
+buildTicks();updateAll(300);
+</script>
+</body>
+</html>
