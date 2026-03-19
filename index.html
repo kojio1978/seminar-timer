@@ -106,16 +106,15 @@ body{
 
 .presets{
   display:grid;
-  grid-template-columns:repeat(auto-fill, 64px);
+  grid-template-columns:repeat(5, 1fr);
   gap:6px;
-  justify-content:center;
   width:100%;
 }
 .preset-btn{
-  width:64px;min-height:34px;padding:6px 0;border-radius:17px;
+  min-height:34px;padding:6px 2px;border-radius:17px;
   font-size:max(.5rem,12px);font-weight:400;cursor:pointer;
   transition:all .25s;font-family:'DM Sans',sans-serif;
-  text-align:center;
+  text-align:center;white-space:nowrap;overflow:hidden;
 }
 .preset-btn:hover{transform:translateY(-1px)}
 .preset-btn.history{font-weight:500}
@@ -587,8 +586,8 @@ function onFinish(){isRunning=false;renderCtrl('finished');$('message').textCont
 function setPreset(h,m,s){$('inputH').value=pad(h);$('inputM').value=pad(m);$('inputS').value=pad(s);updateAll(h*3600+m*60+s)}
 
 // ── History / Presets ──
-const DEFAULT_PRESETS = [60,180,300,600,900,1200,1800,3600]; // 1m,3m,5m,10m,15m,20m,30m,1h
-const MAX_SLOTS = 8;
+const DEFAULT_PRESETS = [60,180,300,600,900,1200,1800,2700,3600,5400]; // 1m,3m,5m,10m,15m,20m,30m,45m,1h,1.5h
+const MAX_SLOTS = 10;
 
 function getHistory(){
   try{return JSON.parse(localStorage.getItem('timer_history'))||[]}catch(e){return[]}
