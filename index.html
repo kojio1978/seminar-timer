@@ -12,7 +12,7 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <title>Seminar Timer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Outfit:wght@200;300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 
@@ -209,7 +209,7 @@ body{
 /* ═══════════════════════════════════
    MINIMAL
    ═══════════════════════════════════ */
-[data-theme="minimal"]{background:#fafafa;color:#1a1a1a;font-family:'Outfit','DM Sans',sans-serif}
+[data-theme="minimal"]{background:#fafafa;color:#1a1a1a;font-family:-apple-system,BlinkMacSystemFont,'DM Sans',sans-serif}
 [data-theme="minimal"] .theme-switch{background:rgba(0,0,0,.03);border-color:rgba(0,0,0,.05)}
 [data-theme="minimal"] .tsw-btn{color:rgba(0,0,0,.3)}
 [data-theme="minimal"] .tsw-btn.active{background:#fff;color:#1a1a1a;box-shadow:0 1px 3px rgba(0,0,0,.07)}
@@ -217,11 +217,11 @@ body{
 [data-theme="minimal"] .tool-btn{border-color:rgba(0,0,0,.07);background:rgba(0,0,0,.02);color:#999}
 [data-theme="minimal"] .mini-display{display:flex!important}
 
-[data-theme="minimal"] .mini-display .dg-digits{font-family:'Outfit',sans-serif;font-size:clamp(2.4rem,18vw,5.5rem);font-weight:200;color:#1a1a1a;letter-spacing:-2px}
+[data-theme="minimal"] .mini-display .dg-digits{font-size:clamp(2.4rem,18vw,5.5rem);font-weight:200;color:#1a1a1a;letter-spacing:-2px}
 [data-theme="minimal"] .mini-display .dg-sep{font-size:clamp(2.4rem,18vw,5.5rem);font-weight:200;color:#1a1a1a;opacity:.7}
 [data-theme="minimal"] .mini-display .dg-label{color:#ccc}
 
-[data-theme="minimal"] .time-input{background:#fff;border:1px solid #e0e0e0;color:#1a1a1a;font-family:'Outfit',sans-serif}
+[data-theme="minimal"] .time-input{background:#fff;border:1px solid #e0e0e0;color:#1a1a1a;font-family:inherit}
 [data-theme="minimal"] .time-input:focus{border-color:#1a1a1a;box-shadow:0 0 0 2px rgba(0,0,0,.03)}
 [data-theme="minimal"] .preset-btn{background:#fff;border:1px solid #e0e0e0;color:#aaa}
 [data-theme="minimal"] .preset-btn:hover{border-color:#999;color:#444}
@@ -331,13 +331,13 @@ body{
 .flip-card::after{content:'';position:absolute;top:50%;left:0;right:0;height:2px;background:linear-gradient(90deg,rgba(0,0,0,.7),rgba(0,0,0,.25) 50%,rgba(0,0,0,.7));z-index:5;box-shadow:0 1px 0 rgba(60,55,48,.15)}
 .flip-card::before{content:'';position:absolute;top:calc(50% - 3px);left:-1px;width:2px;height:6px;background:#0a0908;border-radius:0 1px 1px 0;z-index:6;box-shadow:calc(clamp(1.6rem,12vw,3.5rem) - 0px) 0 0 0 #0a0908}
 .fn-upper,.fn-lower{
-  font-family:'DM Sans',sans-serif;
-  font-size:clamp(1.4rem,11vw,3.2rem);font-weight:500;
+  font-family:'Courier Prime',monospace;
+  font-size:clamp(1.4rem,11vw,3.2rem);font-weight:700;
   color:#e8e4dc;text-shadow:0 1px 2px rgba(0,0,0,.3);line-height:1;position:absolute;
 }
 .fn-upper{bottom:0;transform:translateY(50%)}
 .fn-lower{top:0;transform:translateY(-50%);color:#ddd8d0}
-.flip-sep{font-size:clamp(1.2rem,9vw,2.4rem);font-weight:400;color:#666;display:flex;align-items:center}
+.flip-sep{font-family:'Courier Prime',monospace;font-size:clamp(1.2rem,9vw,2.4rem);font-weight:700;color:#666;display:flex;align-items:center}
 
 [data-theme="flip"] .state-warning .fn-upper,[data-theme="flip"] .state-warning .fn-lower{color:#ffaa00!important}
 [data-theme="flip"] .state-danger .fn-upper,[data-theme="flip"] .state-danger .fn-lower{color:#ff5544!important}
@@ -537,10 +537,12 @@ function updateAll(secs){
 
 function animateFlip(card,ov,nv){
   card.querySelectorAll('.flip-anim').forEach(e=>e.remove());
+  // Get current color from the existing digit (matches warning/danger state)
+  const currentColor=getComputedStyle(card.querySelector('.fn-upper')).color||'#e8e4dc';
   const f=document.createElement('div');
   f.className='flip-anim';
-  f.style.cssText=`position:absolute;top:0;left:0;right:0;height:50%;transform-origin:bottom center;backface-visibility:hidden;z-index:10;overflow:hidden;border-radius:.3rem .3rem 0 0;background:linear-gradient(180deg,#2c2824,#201d19)`;
-  f.innerHTML=`<span style="position:absolute;bottom:0;transform:translateY(50%);font-family:DM Sans;font-size:clamp(1.4rem,11vw,3.2rem);font-weight:500;color:#e8e4dc;text-shadow:0 1px 2px rgba(0,0,0,.3)">${ov}</span>`;
+  f.style.cssText=`position:absolute;top:0;left:0;right:0;height:50%;transform-origin:bottom center;backface-visibility:hidden;z-index:10;overflow:hidden;border-radius:.3rem .3rem 0 0;background:linear-gradient(180deg,#2c2824,#201d19);display:flex;align-items:flex-end;justify-content:center`;
+  f.innerHTML=`<span style="transform:translateY(50%);font-family:'Courier Prime',monospace;font-size:clamp(1.4rem,11vw,3.2rem);font-weight:700;color:${currentColor};text-shadow:0 1px 2px rgba(0,0,0,.3)">${ov}</span>`;
   card.appendChild(f);
   f.animate([{transform:'rotateX(0deg)'},{transform:'rotateX(-90deg)'}],{duration:220,easing:'ease-in',fill:'forwards'}).onfinish=()=>f.remove();
   setTimeout(()=>{card.querySelector('.fn-upper').textContent=nv;card.querySelector('.fn-lower').textContent=nv},110);
