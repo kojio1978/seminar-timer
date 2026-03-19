@@ -41,8 +41,9 @@ body{
   border:1px solid rgba(128,128,128,.08);
 }
 .tsw-btn{
-  padding:8px 12px;border-radius:20px;border:none;
-  font-size:max(.6rem,12px);font-weight:500;font-family:'DM Sans',sans-serif;
+  width:60px;text-align:center;
+  padding:8px 0;border-radius:20px;border:none;
+  font-size:max(.6rem,11px);font-weight:500;font-family:'DM Sans',sans-serif;
   cursor:pointer;transition:all .3s;background:transparent;
   white-space:nowrap;min-height:36px;
 }
@@ -103,11 +104,18 @@ body{
 
 .input-sep{font-size:max(.9rem,16px);font-weight:200;opacity:.3;margin-top:10px}
 
-.presets{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
+.presets{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, 64px);
+  gap:6px;
+  justify-content:center;
+  width:100%;
+}
 .preset-btn{
-  min-height:34px;padding:6px 10px;border-radius:17px;
+  width:64px;min-height:34px;padding:6px 0;border-radius:17px;
   font-size:max(.5rem,12px);font-weight:400;cursor:pointer;
   transition:all .25s;font-family:'DM Sans',sans-serif;
+  text-align:center;
 }
 .preset-btn:hover{transform:translateY(-1px)}
 .preset-btn.history{font-weight:500}
@@ -596,10 +604,11 @@ function saveHistory(secs){
 }
 function formatPreset(secs){
   const h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60),s=secs%60;
-  if(h>0&&m===0&&s===0)return `${h}時間`;
-  if(h>0&&m>0)return `${h}時間${m}分`;
+  if(h>0&&m===0&&s===0)return `${h}h`;
+  if(h>0&&m>0&&s===0)return `${h}h${m}m`;
+  if(h>0)return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
   if(m>0&&s===0)return `${m}分`;
-  if(m>0&&s>0)return `${m}分${s}秒`;
+  if(m>0&&s>0)return `${m}:${String(s).padStart(2,'0')}`;
   return `${s}秒`;
 }
 function renderPresets(){
