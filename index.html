@@ -21,7 +21,8 @@ html{font-size:min(3.2vw, 16px)} /* Root scales with viewport width */
 body{
   min-height:100vh;min-height:100dvh;
   display:flex;align-items:center;justify-content:center;
-  overflow:hidden;user-select:none;-webkit-user-select:none;
+  overflow-x:hidden;overflow-y:auto;
+  user-select:none;-webkit-user-select:none;
   transition:background .5s,color .4s;
 }
 
@@ -106,9 +107,11 @@ body{
 
 .presets{
   display:grid;
-  grid-template-columns:repeat(5, 1fr);
+  grid-template-columns:repeat(4, 1fr);
   gap:6px;
   width:100%;
+  max-width:320px;
+  margin:0 auto;
 }
 .preset-btn{
   min-height:34px;padding:6px 2px;border-radius:17px;
@@ -157,15 +160,15 @@ body{
 .hidden{display:none!important}
 
 /* ── Digital Display ── */
-.digit-row{display:flex;align-items:center;justify-content:center;gap:0;width:100%}
+.digit-row{display:flex;align-items:flex-start;justify-content:center;gap:0;width:100%}
 .dg{text-align:center}
 .dg-digits{font-variant-numeric:tabular-nums;line-height:1;transition:color .5s}
 .dg-label{font-size:max(.48rem,9px);letter-spacing:1px;text-transform:uppercase;opacity:.4;margin-top:3px}
 .dg-sep{
   line-height:1;transition:color .5s,opacity .5s;
   display:flex;align-items:center;
-  margin-bottom:1rem;
   padding:0 .1em;
+  height:1em; /* match digit line-height */
 }
 
 /* ═══════════════════════════════════
@@ -587,8 +590,8 @@ function onFinish(){isRunning=false;renderCtrl('finished');$('message').textCont
 function setPreset(h,m,s){$('inputH').value=pad(h);$('inputM').value=pad(m);$('inputS').value=pad(s);updateAll(h*3600+m*60+s)}
 
 // ── History / Presets ──
-const DEFAULT_PRESETS = [60,180,300,600,900,1200,1800,2700,3600,5400]; // 1m,3m,5m,10m,15m,20m,30m,45m,1h,1.5h
-const MAX_SLOTS = 10;
+const DEFAULT_PRESETS = [60,180,300,600,900,1200,1800,3600]; // 1m,3m,5m,10m,15m,20m,30m,1h
+const MAX_SLOTS = 8;
 
 function getHistory(){
   try{return JSON.parse(localStorage.getItem('timer_history'))||[]}catch(e){return[]}
