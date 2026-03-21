@@ -325,19 +325,24 @@ body{
   width:clamp(1.6rem,12vw,3.5rem);height:clamp(2.4rem,18vw,5.2rem);
   position:relative;perspective:600px;
 }
-.fc-upper,.fc-lower{position:absolute;width:100%;height:50%;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.fc-upper,.fc-lower{position:absolute;width:100%;height:50%;overflow:hidden}
 .fc-upper{top:0;background:linear-gradient(180deg,#2c2824,#201d19);border-radius:.3rem .3rem 0 0;border-bottom:1px solid rgba(0,0,0,.5);z-index:1}
 .fc-lower{bottom:0;background:linear-gradient(180deg,#1e1b17,#181510);border-radius:0 0 .3rem .3rem;border-top:1px solid rgba(60,55,48,.25)}
 .flip-card::after{content:'';position:absolute;top:50%;left:0;right:0;height:2px;background:linear-gradient(90deg,rgba(0,0,0,.7),rgba(0,0,0,.25) 50%,rgba(0,0,0,.7));z-index:5;box-shadow:0 1px 0 rgba(60,55,48,.15)}
 .flip-card::before{content:'';position:absolute;top:calc(50% - 3px);left:-1px;width:2px;height:6px;background:#0a0908;border-radius:0 1px 1px 0;z-index:6;box-shadow:calc(clamp(1.6rem,12vw,3.5rem) - 0px) 0 0 0 #0a0908}
 .fn-upper,.fn-lower{
   font-family:'Courier Prime',monospace;
-  font-size:clamp(1.4rem,11vw,3.2rem);font-weight:700;
-  color:#e8e4dc;text-shadow:0 1px 2px rgba(0,0,0,.3);line-height:1;position:absolute;
+  font-size:clamp(2.1rem,16.5vw,4.8rem);font-weight:700;
+  color:#e8e4dc;text-shadow:0 1px 2px rgba(0,0,0,.3);
+  line-height:1;position:absolute;
+  left:0;right:0;text-align:center;
+  height:clamp(2.4rem,18vw,5.2rem);
+  display:flex;align-items:center;justify-content:center;
+  padding-top:.15em;
 }
-.fn-upper{bottom:0;transform:translateY(50%)}
+.fn-upper{top:0}
 .fn-lower{top:0;transform:translateY(-50%);color:#ddd8d0}
-.flip-sep{font-family:'Courier Prime',monospace;font-size:clamp(1.2rem,9vw,2.4rem);font-weight:700;color:#666;display:flex;align-items:center}
+.flip-sep{font-family:'Courier Prime',monospace;font-size:clamp(1.8rem,13vw,3.6rem);font-weight:700;color:#666;display:flex;align-items:center}
 
 [data-theme="flip"] .state-warning .fn-upper,[data-theme="flip"] .state-warning .fn-lower{color:#ffaa00!important}
 [data-theme="flip"] .state-danger .fn-upper,[data-theme="flip"] .state-danger .fn-lower{color:#ff5544!important}
@@ -353,7 +358,7 @@ body{
 :fullscreen .analog-time,:-webkit-full-screen .analog-time{font-size:3rem!important}
 :fullscreen .analog-sep,:-webkit-full-screen .analog-sep{font-size:3rem!important}
 :fullscreen .flip-card,:-webkit-full-screen .flip-card{width:4.2rem!important;height:6.2rem!important}
-:fullscreen .fn-upper,:-webkit-full-screen .fn-upper,:fullscreen .fn-lower,:-webkit-full-screen .fn-lower{font-size:3.8rem!important}
+:fullscreen .fn-upper,:-webkit-full-screen .fn-upper,:fullscreen .fn-lower,:-webkit-full-screen .fn-lower{font-size:5.7rem!important}
 :fullscreen .flip-sep,:-webkit-full-screen .flip-sep{font-size:3rem!important}
 :fullscreen .flip-case,:-webkit-full-screen .flip-case{padding:.8rem!important;border-radius:1rem!important}
 :fullscreen .flip-inner,:-webkit-full-screen .flip-inner{padding:.8rem .6rem!important;border-radius:.5rem!important;gap:.4rem!important}
@@ -537,12 +542,15 @@ function updateAll(secs){
 
 function animateFlip(card,ov,nv){
   card.querySelectorAll('.flip-anim').forEach(e=>e.remove());
-  // Get current color from the existing digit (matches warning/danger state)
   const currentColor=getComputedStyle(card.querySelector('.fn-upper')).color||'#e8e4dc';
+  const cardH=card.offsetHeight;
   const f=document.createElement('div');
   f.className='flip-anim';
-  f.style.cssText=`position:absolute;top:0;left:0;right:0;height:50%;transform-origin:bottom center;backface-visibility:hidden;z-index:10;overflow:hidden;border-radius:.3rem .3rem 0 0;background:linear-gradient(180deg,#2c2824,#201d19);display:flex;align-items:flex-end;justify-content:center`;
-  f.innerHTML=`<span style="transform:translateY(50%);font-family:'Courier Prime',monospace;font-size:clamp(1.4rem,11vw,3.2rem);font-weight:700;color:${currentColor};text-shadow:0 1px 2px rgba(0,0,0,.3)">${ov}</span>`;
+  f.style.cssText=`position:absolute;top:0;left:0;right:0;height:50%;transform-origin:bottom center;backface-visibility:hidden;z-index:10;overflow:hidden;border-radius:.3rem .3rem 0 0;background:linear-gradient(180deg,#2c2824,#201d19)`;
+  const inner=document.createElement('span');
+  inner.textContent=ov;
+  inner.style.cssText=`position:absolute;left:0;right:0;text-align:center;height:${cardH}px;display:flex;align-items:center;justify-content:center;padding-top:.15em;top:0;font-family:'Courier Prime',monospace;font-size:clamp(2.1rem,16.5vw,4.8rem);font-weight:700;color:${currentColor};text-shadow:0 1px 2px rgba(0,0,0,.3)`;
+  f.appendChild(inner);
   card.appendChild(f);
   f.animate([{transform:'rotateX(0deg)'},{transform:'rotateX(-90deg)'}],{duration:220,easing:'ease-in',fill:'forwards'}).onfinish=()=>f.remove();
   setTimeout(()=>{card.querySelector('.fn-upper').textContent=nv;card.querySelector('.fn-lower').textContent=nv},110);
